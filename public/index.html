@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CodeLens — AI-powered code analysis, optimization, and algorithm generation platform.">
+  <title>CodeLens — Code Analysis & Optimization Platform</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <!-- Login Modal -->
+  <div class="login-modal hidden" id="login-modal">
+    <div class="login-card">
+      <button class="login-close" id="login-close">&times;</button>
+      <div class="login-logo">🔍</div>
+      <div class="login-title" id="login-modal-title">Welcome Back</div>
+      <div class="login-subtitle" id="login-modal-subtitle">Sign in to save your analysis history</div>
+
+      <form id="auth-form" class="auth-form" autocomplete="on">
+        <div class="auth-field hidden" id="auth-name-field">
+          <label for="auth-name"><i class="fa-solid fa-user"></i> Name</label>
+          <input type="text" id="auth-name" placeholder="Your name" autocomplete="name">
+        </div>
+        <div class="auth-field">
+          <label for="auth-email"><i class="fa-solid fa-envelope"></i> Email</label>
+          <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="auth-field">
+          <label for="auth-password"><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <div class="auth-error hidden" id="auth-error"></div>
+        <button type="submit" class="btn btn-primary auth-submit" id="auth-submit-btn">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In
+        </button>
+      </form>
+
+      <div class="login-divider">or</div>
+      <div class="login-toggle">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <a id="auth-toggle-link">Sign Up</a>
+      </div>
+      <div class="login-skip">Continue as <a id="login-skip-link">Guest</a> — analysis works without signing in</div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header" id="app-header">
+      <div class="logo-group">
+        <div class="logo-icon">🔍</div>
+        <div class="logo-text">
+          <h1>CodeLens</h1>
+          <span>Code Analysis & Optimization</span>
+        </div>
+        <div class="ai-badge needs-key" id="ai-status-badge" title="Click ⚙️ to enable AI">
+          <i class="fa-solid fa-key"></i> Set API Key
+        </div>
+      </div>
+      <div class="header-controls">
+        <div class="language-selector">
+          <select class="language-select" id="language-select">
+            <option value="python">🐍 Python</option>
+            <option value="javascript">⚡ JavaScript</option>
+            <option value="java">☕ Java</option>
+            <option value="c++">🔧 C++</option>
+            <option value="c">⚙️ C</option>
+          </select>
+        </div>
+        <button class="btn btn-icon" id="btn-settings" title="Settings"><i class="fa-solid fa-gear"></i></button>
+        <nav class="nav-tabs" id="nav-tabs">
+          <button class="nav-tab active" data-tab="editor"><span class="tab-icon"><i class="fa-solid fa-code"></i></span> Editor</button>
+          <button class="nav-tab" data-tab="comparison"><span class="tab-icon"><i class="fa-solid fa-columns"></i></span> Compare</button>
+          <button class="nav-tab" data-tab="generator"><span class="tab-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> Generate</button>
+          <button class="nav-tab" data-tab="history"><span class="tab-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> History</button>
+        </nav>
+        <!-- User menu -->
+        <div class="user-menu" id="user-menu">
+          <div id="user-menu-guest">
+            <button class="btn-login" id="btn-show-login"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+          </div>
+          <div id="user-menu-auth" class="hidden" style="display:none;">
+            <span class="user-name" id="user-display-name"></span>
+            <img class="user-avatar" id="user-avatar" src="" alt="Avatar">
+            <button class="btn-logout" id="btn-logout">Logout</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal hidden" id="settings-modal">
+      <div class="settings-card">
+        <div class="settings-header">
+          <h3><i class="fa-solid fa-gear text-accent"></i> Settings</h3>
+          <button class="btn btn-icon btn-sm" id="btn-close-settings"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="settings-body">
+          <div class="setting-group">
+            <label class="setting-label"><i class="fa-solid fa-server"></i> AI Provider</label>
+            <select class="setting-input" id="ai-provider-select" style="flex:none;width:100%;margin-bottom:8px">
+              <option value="groq" selected>🚀 Groq (Free — Llama 3)</option>
+              <option value="gemini">🧠 Google Gemini</option>
+            </select>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">
+              <i class="fa-solid fa-key"></i> API Key
+              <span class="setting-hint" id="api-key-hint">(100% Free — <a href="https://console.groq.com/keys" target="_blank">Get free Groq key</a>)</span>
+            </label>
+            <div class="setting-input-row">
+              <input type="password" class="setting-input" id="api-key-input" placeholder="gsk_...">
+              <button class="btn btn-primary btn-sm" id="btn-save-api-key"><i class="fa-solid fa-plug"></i> Activate AI</button>
+            </div>
+            <p class="setting-desc" id="api-key-desc">
+              Groq is 100% free — no credit card needed. Get your key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Editor Panel ═══ -->
+    <section class="panel active" id="panel-editor">
+      <!-- Language mismatch warning (hidden by default) -->
+      <div class="language-warning hidden" id="language-warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="language-warning-text"></span>
+        <button id="btn-fix-language">Fix it</button>
+      </div>
+
+      <div class="analyze-btn-container">
+        <div class="spinner" id="analyze-spinner"></div>
+        <button class="btn btn-primary" id="btn-analyze"><i class="fa-solid fa-bolt"></i> Analyze Code</button>
+      </div>
+
+      <div class="editor-layout mt-md">
+        <div class="editor-container">
+          <div class="editor-toolbar">
+            <div class="editor-toolbar-left">
+              <div class="dot-group"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+              <span class="editor-filename" id="editor-filename">main.py</span>
+            </div>
+            <div><button class="btn btn-sm btn-icon" id="btn-clear" title="Clear Editor"><i class="fa-solid fa-trash-can"></i></button></div>
+          </div>
+          <div id="editor-wrapper"></div>
+        </div>
+
+        <aside class="analysis-sidebar" id="analysis-sidebar">
+          <div class="card" id="card-rating">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-gauge-high text-accent"></i> Efficiency Rating</span>
+            </div>
+            <div class="gauge-container" id="gauge-container">
+              <div class="empty-state no-results-pulse"><div class="empty-icon">📊</div><div class="empty-title">No analysis yet</div><div class="empty-desc">Click "Analyze Code" to get started</div></div>
+            </div>
+          </div>
+          <div class="card" id="card-complexity">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-chart-line text-accent"></i> Complexity</span></div>
+            <div class="complexity-display" id="complexity-display">
+              <div class="empty-state no-results-pulse"><div class="empty-icon">⏱️</div><div class="empty-desc">Complexity analysis will appear here</div></div>
+            </div>
+          </div>
+          <div class="card" id="card-issues">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-bug text-accent"></i> Issues</span>
+              <span class="stat-chip" id="issue-count-chip" style="display:none"><span class="stat-value" id="issue-count">0</span> issues</span>
+            </div>
+            <div class="issues-list" id="issues-list">
+              <div class="empty-state no-results-pulse"><div class="empty-icon">🔎</div><div class="empty-desc">Dead code & optimization issues shown here</div></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="stats-bar mt-lg" id="stats-bar" style="display:none">
+        <div class="stat-chip"><i class="fa-solid fa-clock"></i> Analysis: <span class="stat-value" id="stat-time">—</span></div>
+        <div class="stat-chip"><i class="fa-solid fa-file-lines"></i> Lines: <span class="stat-value" id="stat-lines">—</span></div>
+        <div class="stat-chip"><i class="fa-solid fa-cube"></i> Functions: <span class="stat-value" id="stat-funcs">—</span></div>
+        <div class="stat-chip"><i class="fa-solid fa-rotate"></i> Loops: <span class="stat-value" id="stat-loops">—</span></div>
+        <div class="stat-chip"><i class="fa-solid fa-microchip"></i> Engine: <span class="stat-value" id="stat-engine">—</span></div>
+      </div>
+    </section>
+
+    <!-- ═══ Comparison Panel ═══ -->
+    <section class="panel" id="panel-comparison">
+      <div class="comparison-layout" id="comparison-layout">
+        <div class="comparison-pane">
+          <div class="comparison-header"><span><i class="fa-solid fa-file-code"></i> Original Code</span><span class="text-error" id="comparison-removed-count"></span></div>
+          <pre id="comparison-original"><div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">No comparison available</div><div class="empty-desc">Analyze your code first</div></div></pre>
+        </div>
+        <div class="comparison-pane">
+          <div class="comparison-header">
+            <span><i class="fa-solid fa-sparkles"></i> Optimized Code</span>
+            <span class="text-success" id="comparison-added-count"></span>
+          </div>
+          <pre id="comparison-optimized"><div class="empty-state"><div class="empty-icon">✨</div><div class="empty-title">Optimized version</div><div class="empty-desc">Actual optimized code will appear here</div></div></pre>
+        </div>
+      </div>
+      <div class="use-optimized-btn" id="use-optimized-container" style="display:none">
+        <button class="btn btn-primary" id="btn-use-optimized"><i class="fa-solid fa-arrow-right"></i> Use Optimized Code</button>
+        <button class="btn" id="btn-copy-optimized" style="margin-left:8px"><i class="fa-solid fa-copy"></i> Copy</button>
+      </div>
+    </section>
+
+    <!-- ═══ Generator Panel ═══ -->
+    <section class="panel" id="panel-generator">
+      <div class="card mb-lg" id="ai-generate-section" style="margin-bottom:16px">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-brain text-accent"></i> AI Code Generator</span>
+          <span class="ai-badge-sm">Powered by AI</span>
+        </div>
+        <div class="ai-generate-row">
+          <input type="text" class="setting-input" id="ai-description-input" placeholder="Describe any algorithm... e.g. 'Dijkstra shortest path'">
+          <button class="btn btn-primary" id="btn-ai-generate"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate</button>
+        </div>
+      </div>
+      <div class="generator-layout">
+        <div class="card">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-list text-accent"></i> Templates</span></div>
+          <div class="algorithm-list" id="algorithm-list"></div>
+        </div>
+        <div class="generated-code-container">
+          <div class="generated-code-header">
+            <span class="algo-title" id="generated-algo-title">Select an algorithm</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm" id="btn-copy-generated"><i class="fa-solid fa-copy"></i> Copy</button>
+              <button class="btn btn-sm btn-primary" id="btn-analyze-generated"><i class="fa-solid fa-bolt"></i> Analyze</button>
+            </div>
+          </div>
+          <pre id="generated-code-display"><div class="empty-state"><div class="empty-icon">🧩</div><div class="empty-title">Choose an algorithm</div><div class="empty-desc">Select from templates or describe any algorithm above</div></div></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ History Panel ═══ -->
+    <section class="panel" id="panel-history">
+      <div id="history-auth-check">
+        <!-- Shown to guests -->
+        <div class="auth-required-state" id="history-auth-required">
+          <div class="auth-icon">🔒</div>
+          <div class="auth-title">Sign in to view history</div>
+          <div class="auth-desc">Your analysis history is saved when you're signed in with Google</div>
+          <button class="btn btn-primary" id="btn-history-login"><i class="fa-solid fa-right-to-bracket"></i> Sign in to view history</button>
+        </div>
+        <!-- Shown to authenticated users -->
+        <div class="hidden" id="history-content">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h2 style="font-family:var(--font-display);font-size:1.2rem;font-weight:700"><i class="fa-solid fa-clock-rotate-left text-accent"></i> Submission History</h2>
+            <button class="btn btn-sm btn-danger" id="btn-clear-history"><i class="fa-solid fa-trash"></i> Clear All</button>
+          </div>
+          <div class="history-grid" id="history-grid">
+            <div class="empty-state" id="history-empty"><div class="empty-icon">📁</div><div class="empty-title">No submissions yet</div><div class="empty-desc">Your analyzed code will appear here</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
